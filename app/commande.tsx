@@ -12,7 +12,7 @@ import { usePanier } from '@/context/PanierContexte';
 import { trouverProduit } from '@/data/produits';
 import type { LigneCommande } from '@/data/types';
 import { couleurs, espacementLettres, espaces, LARGEUR_PETIT_ECRAN, polices, rayons } from '@/theme/theme';
-import { bornerQuantite, calculerTotal, compterArticles, libelleArticles } from '@/utils/commande';
+import { bornerQuantite, calculerSousTotal, calculerTotal, compterArticles, libelleArticles } from '@/utils/commande';
 import { formaterPrix } from '@/utils/prix';
 
 /** Durée de l'enregistrement simulé de la commande. */
@@ -56,6 +56,18 @@ export default function EcranCommande() {
   // Le total est recalculé à chaque rendu, donc à chaque changement de quantité.
   const total = calculerTotal(lignes);
   const nombreArticles = compterArticles(lignes);
+
+  // Petit « pouls » sur le total quand il change, pour rendre la mise à jour visible.
+  const echelleTotal = useRef(new Animated.Value(1)).current;
+  const premierTotal = useRef(true);
+  useEffect(() => {
+    if (premierTotal.current) {
+      premierTotal.current = false;
+      return;
+    }
+    echelleTotal.setValue(1.12);
+    Animated.spring(echelleTotal, { toValue: 1, friction: 4, useNativeDriver: true }).start();
+  }, [total, echelleTotal]);
 
   const changerQuantite = (idProduit: number, quantite: number) => {
     setLignes((actuelles) =>
@@ -125,11 +137,27 @@ export default function EcranCommande() {
             </View>
 
             <View style={styles.totalBoite}>
+              {/* Détail : une ligne par produit, recalculée à chaque changement de quantité. */}
+              <View style={styles.detail}>
+                {lignes.map((ligne) => (
+                  <View key={ligne.produit.id} style={styles.detailLigne}>
+                    <Text style={styles.detailNom} numberOfLines={1}>
+                      {ligne.produit.nom} <Text style={styles.detailQuantite}>× {ligne.quantite}</Text>
+                    </Text>
+                    <Text style={styles.detailMontant}>{formaterPrix(calculerSousTotal(ligne))}</Text>
+                  </View>
+                ))}
+              </View>
               <View style={styles.totalLigne}>
-                <Text style={styles.totalLibelle}>Total de la commande</Text>
-                <Text style={styles.totalMontant} accessibilityLiveRegion="polite">
-                  {formaterPrix(total)}
+                <Text style={styles.totalLibelle}>
+                  Total · {libelleArticles(nombreArticles)}
                 </Text>
+                <Animated.Text
+                  style={[styles.totalMontant, { transform: [{ scale: echelleTotal }] }]}
+                  accessibilityLiveRegion="polite"
+                >
+                  {formaterPrix(total)}
+                </Animated.Text>
               </View>
               <Text style={styles.totalNote}>
                 En confirmant, vous enregistrez uniquement une demande fictive. Aucun paiement ni livraison réelle.
@@ -211,6 +239,34 @@ const styles = StyleSheet.create({
     padding: 18,
     borderRadius: rayons.ligne,
     backgroundColor: couleurs.marqueDouce,
+  },
+  detail: {
+    gap: 8,
+    marginBottom: 13,
+    paddingBottom: 13,
+    borderBottomWidth: 1,
+    borderBottomColor: couleurs.bordureConfirmation,
+  },
+  detailLigne: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  detailNom: {
+    flexShrink: 1,
+    fontFamily: polices.moyen,
+    fontSize: 11,
+    color: couleurs.texteConfirmation,
+  },
+  detailQuantite: {
+    fontFamily: polices.gras,
+    color: couleurs.marque,
+  },
+  detailMontant: {
+    fontFamily: polices.gras,
+    fontSize: 11,
+    color: couleurs.texteConfirmation,
   },
   totalLigne: {
     flexDirection: 'row',
