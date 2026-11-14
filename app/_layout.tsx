@@ -11,6 +11,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
+import { FournisseurPanier } from '@/context/PanierContexte';
 import { couleurs } from '@/theme/theme';
 
 // On garde l'écran de démarrage tant que la police Manrope n'est pas prête,
@@ -40,10 +41,10 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    <FournisseurPanier>
       <StatusBar style="dark" />
       {/* Pile d'écrans sans en-tête natif : chaque écran dessine le sien, comme la maquette. */}
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: couleurs.fondEcran } }} />
-    </>
+    </FournisseurPanier>
   );
 }

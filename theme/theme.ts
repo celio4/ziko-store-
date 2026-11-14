@@ -64,6 +64,7 @@ export const couleurs = {
   succes: '#5F7838', // pictogramme « succès » de la feuille des états
   fondSucces: '#EFF4E7',
   fondDanger: '#FBEFEE',
+  fondToast: '#26342F',
 } as const;
 
 /** Police Manrope (chargée via @expo-google-fonts/manrope), une famille par graisse. */
@@ -99,6 +100,7 @@ export const ombres = {
   boutonPrincipal: '0px 8px 18px rgba(23, 107, 82, 0.18)',
   photoBienvenue: '0px 18px 38px rgba(32, 51, 43, 0.13)',
   feuille: '0px -12px 40px rgba(20, 30, 26, 0.16)',
+  toast: '0px 12px 28px rgba(25, 35, 31, 0.25)',
 } as const;
 
 /** Marges générales. */
