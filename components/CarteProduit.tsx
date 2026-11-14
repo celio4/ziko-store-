@@ -1,8 +1,8 @@
 import { memo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import type { Produit } from '@/data/types';
-import { couleurs, espacementLettres, ombres, polices, rayons } from '@/theme/theme';
+import { couleurs, espacementLettres, LARGEUR_PETIT_ECRAN, ombres, polices, rayons } from '@/theme/theme';
 import { formaterPrix } from '@/utils/prix';
 import { ImageProduit } from './ImageProduit';
 
@@ -20,6 +20,10 @@ type Props = {
  * pendant le défilement.
  */
 function CarteProduitBase({ produit, onPress, forcerRemplacementPhoto = false }: Props) {
+  // Sur un petit écran, la photo passe de 126 à 108 pt de large (règle de la maquette).
+  const { width } = useWindowDimensions();
+  const petitEcran = width < LARGEUR_PETIT_ECRAN;
+
   return (
     <Pressable
       onPress={() => onPress(produit)}
@@ -27,7 +31,12 @@ function CarteProduitBase({ produit, onPress, forcerRemplacementPhoto = false }:
       accessibilityLabel={`${produit.nom}, ${formaterPrix(produit.prix)}. Voir le produit`}
       style={({ pressed }) => [styles.carte, pressed && styles.appuyee]}
     >
-      <ImageProduit uri={produit.photo} nom={produit.nom} style={styles.image} forcerRemplacement={forcerRemplacementPhoto} />
+      <ImageProduit
+        uri={produit.photo}
+        nom={produit.nom}
+        style={[styles.image, petitEcran && styles.imagePetitEcran]}
+        forcerRemplacement={forcerRemplacementPhoto}
+      />
       <View style={styles.texte}>
         <Text style={styles.surtitre} numberOfLines={1}>
           {produit.categorie}
@@ -69,6 +78,9 @@ const styles = StyleSheet.create({
     width: 126,
     minHeight: 124,
     borderRadius: rayons.image,
+  },
+  imagePetitEcran: {
+    width: 108,
   },
   texte: {
     flex: 1,

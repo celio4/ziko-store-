@@ -1,10 +1,7 @@
-import { Text, View } from 'react-native';
+import { Redirect } from 'expo-router';
 
-// Écran provisoire : sera remplacé par l'écran de bienvenue.
+// Provisoire : l'application ouvre directement le catalogue.
+// L'écran de bienvenue de la maquette viendra remplacer cette redirection.
 export default function Accueil() {
-  return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <Text>Ziko</Text>
-    </View>
-  );
+  return <Redirect href="/catalogue" />;
 }

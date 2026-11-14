@@ -61,6 +61,9 @@ export const couleurs = {
   fondBoutonFermer: '#F1F2EF',
   separateurFeuille: '#F0F1EE',
   pagerInactif: 'rgba(255, 255, 255, 0.65)', // #ffffffa6
+  succes: '#5F7838', // pictogramme « succès » de la feuille des états
+  fondSucces: '#EFF4E7',
+  fondDanger: '#FBEFEE',
 } as const;
 
 /** Police Manrope (chargée via @expo-google-fonts/manrope), une famille par graisse. */
@@ -103,6 +106,9 @@ export const espaces = {
   bordEcran: 20, // marge latérale des écrans
   bordEcranPetit: 15, // marge latérale sur les écrans de moins de 360 pt
 } as const;
+
+/** En dessous de cette largeur, la maquette resserre les marges et les photos. */
+export const LARGEUR_PETIT_ECRAN = 360;
 
 /** Taille minimale d'une zone tactile (recommandation iOS et Android). */
 export const ZONE_TACTILE_MIN = 44;
