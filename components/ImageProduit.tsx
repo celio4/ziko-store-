@@ -16,8 +16,8 @@ type Props = {
 /**
  * Photo d'un produit.
  *
- * - `cachePolicy="disk"` : expo-image garde la photo sur le disque du téléphone,
- *   elle reste donc visible hors connexion une fois téléchargée.
+ * - `cachePolicy="memory-disk"` : expo-image garde la photo en mémoire (défilement
+ *   fluide) et sur le disque du téléphone : elle reste visible hors connexion.
  * - Si la photo ne peut pas être chargée, on affiche un visuel de remplacement
  *   (icône colis + « Photo indisponible » + nom du produit), comme la maquette.
  */
@@ -43,7 +43,7 @@ export function ImageProduit({ uri, nom, style, forcerRemplacement = false }: Pr
         source={{ uri }}
         style={StyleSheet.absoluteFill}
         contentFit="cover"
-        cachePolicy="disk"
+        cachePolicy="memory-disk"
         transition={150}
         accessibilityLabel={nom}
         onError={() => setEnErreur(true)}

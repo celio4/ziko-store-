@@ -21,7 +21,7 @@ import { filtrerProduits } from '@/utils/recherche';
 type Statut = 'chargement' | 'erreur' | 'pret';
 
 /** États proposés dans la feuille « Tester les états ». */
-type EtatDemo = 'chargement' | 'erreur' | 'vide' | 'recherche-vide' | 'photo' | 'charge';
+type EtatDemo = 'chargement' | 'erreur' | 'hors-ligne' | 'vide' | 'recherche-vide' | 'photo' | 'charge';
 
 /** Recherche utilisée pour montrer l'état « aucun résultat ». */
 const RECHERCHE_SANS_RESULTAT = 'Parapluie';
@@ -29,6 +29,7 @@ const RECHERCHE_SANS_RESULTAT = 'Parapluie';
 const OPTIONS_DEMO: readonly OptionEtat<EtatDemo>[] = [
   { cle: 'chargement', titre: 'Chargement', description: 'Squelettes pendant une seconde', icone: 'chargement' },
   { cle: 'erreur', titre: 'Erreur de chargement', description: 'Message et action pour réessayer', icone: 'recharger', ton: 'danger' },
+  { cle: 'hors-ligne', titre: 'Hors connexion', description: 'Catalogue enregistré sur le téléphone', icone: 'recharger' },
   { cle: 'vide', titre: 'Liste vide', description: 'Aucun produit dans le catalogue', icone: 'colis' },
   { cle: 'recherche-vide', titre: 'Recherche vide', description: 'Aucun produit correspondant', icone: 'recherche' },
   { cle: 'photo', titre: 'Photo indisponible', description: 'Visuel de remplacement sur une carte', icone: 'colis' },
@@ -45,6 +46,7 @@ export default function EcranCatalogue() {
 
   const [statut, setStatut] = useState<Statut>('chargement');
   const [produits, setProduits] = useState<Produit[]>([]);
+  const [depuisCache, setDepuisCache] = useState(false);
   const [feuilleOuverte, setFeuilleOuverte] = useState(false);
   const [photoForcee, setPhotoForcee] = useState(false);
   const [recherche, setRecherche] = useState('');
@@ -72,7 +74,8 @@ export default function EcranCatalogue() {
     try {
       const resultat = await chargerProduits(options);
       if (numero !== dernierChargement.current) return;
-      setProduits(resultat);
+      setProduits(resultat.produits);
+      setDepuisCache(resultat.source === 'cache');
       setStatut('pret');
     } catch {
       if (numero !== dernierChargement.current) return;
@@ -97,6 +100,8 @@ export default function EcranCatalogue() {
     setRecherche(etat === 'recherche-vide' ? RECHERCHE_SANS_RESULTAT : '');
     if (etat === 'erreur') {
       charger({ simulerErreur: true });
+    } else if (etat === 'hors-ligne') {
+      charger({ simulerHorsLigne: true });
     } else if (etat === 'vide') {
       charger({ simulerVide: true });
     } else if (etat === 'chargement') {
@@ -125,6 +130,11 @@ export default function EcranCatalogue() {
           </Pressable>
         }
       />
+      {statut === 'pret' && depuisCache && (
+        <Text style={styles.bandeau} accessibilityLiveRegion="polite">
+          Hors connexion · catalogue enregistré sur le téléphone
+        </Text>
+      )}
       <ChampRecherche valeur={recherche} onChange={setRecherche} />
       <View style={styles.filtres}>
         <FiltresCategories active={categorie} onChange={setCategorie} bord={bord} />
@@ -238,6 +248,18 @@ const styles = StyleSheet.create({
   },
   appuye: {
     opacity: 0.75,
+  },
+  // Bandeau d'information (classe .inline-notice de la maquette).
+  bandeau: {
+    marginBottom: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 13,
+    borderRadius: rayons.champ,
+    overflow: 'hidden',
+    backgroundColor: couleurs.marqueDouce,
+    fontFamily: polices.normal,
+    fontSize: 10,
+    color: couleurs.marque,
   },
   filtres: {
     marginTop: 16,
