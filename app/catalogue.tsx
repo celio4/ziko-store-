@@ -1,29 +1,36 @@
 import { router } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CarteProduit } from '@/components/CarteProduit';
+import { ChampRecherche } from '@/components/ChampRecherche';
 import { EnTete } from '@/components/EnTete';
 import { FeuilleEtats, type OptionEtat } from '@/components/FeuilleEtats';
+import { FiltresCategories } from '@/components/FiltresCategories';
 import { Icone } from '@/components/Icone';
 import { MessageEtat } from '@/components/MessageEtat';
 import { SqueletteProduit } from '@/components/SqueletteProduit';
 import { chargerProduits, type OptionsChargement } from '@/data/catalogue';
-import type { Produit } from '@/data/types';
+import type { Categorie, Produit } from '@/data/types';
 import { couleurs, espacementLettres, espaces, LARGEUR_PETIT_ECRAN, polices, rayons } from '@/theme/theme';
 import { libelleArticles } from '@/utils/commande';
+import { filtrerProduits } from '@/utils/recherche';
 
 /** Les trois états possibles du chargement. */
 type Statut = 'chargement' | 'erreur' | 'pret';
 
 /** États proposés dans la feuille « Tester les états ». */
-type EtatDemo = 'chargement' | 'erreur' | 'vide' | 'photo' | 'charge';
+type EtatDemo = 'chargement' | 'erreur' | 'vide' | 'recherche-vide' | 'photo' | 'charge';
+
+/** Recherche utilisée pour montrer l'état « aucun résultat ». */
+const RECHERCHE_SANS_RESULTAT = 'Parapluie';
 
 const OPTIONS_DEMO: readonly OptionEtat<EtatDemo>[] = [
   { cle: 'chargement', titre: 'Chargement', description: 'Squelettes pendant une seconde', icone: 'chargement' },
   { cle: 'erreur', titre: 'Erreur de chargement', description: 'Message et action pour réessayer', icone: 'recharger', ton: 'danger' },
   { cle: 'vide', titre: 'Liste vide', description: 'Aucun produit dans le catalogue', icone: 'colis' },
+  { cle: 'recherche-vide', titre: 'Recherche vide', description: 'Aucun produit correspondant', icone: 'recherche' },
   { cle: 'photo', titre: 'Photo indisponible', description: 'Visuel de remplacement sur une carte', icone: 'colis' },
   { cle: 'charge', titre: 'Catalogue chargé', description: 'Les six produits disponibles', icone: 'valider', ton: 'succes' },
 ];
@@ -40,6 +47,20 @@ export default function EcranCatalogue() {
   const [produits, setProduits] = useState<Produit[]>([]);
   const [feuilleOuverte, setFeuilleOuverte] = useState(false);
   const [photoForcee, setPhotoForcee] = useState(false);
+  const [recherche, setRecherche] = useState('');
+  const [categorie, setCategorie] = useState<Categorie | null>(null);
+
+  // Produits affichés : filtrés par nom et par catégorie (recalculé seulement si besoin).
+  const produitsAffiches = useMemo(
+    () => filtrerProduits(produits, recherche, categorie),
+    [produits, recherche, categorie],
+  );
+  const filtreActif = recherche.trim() !== '' || categorie !== null;
+
+  const reinitialiserFiltres = () => {
+    setRecherche('');
+    setCategorie(null);
+  };
 
   // Numéro du dernier chargement lancé : on ignore les réponses des anciens
   // chargements (par exemple si l'on touche deux fois « Réessayer »).
@@ -72,6 +93,8 @@ export default function EcranCatalogue() {
   const choisirEtat = (etat: EtatDemo) => {
     setFeuilleOuverte(false);
     setPhotoForcee(etat === 'photo');
+    setCategorie(null);
+    setRecherche(etat === 'recherche-vide' ? RECHERCHE_SANS_RESULTAT : '');
     if (etat === 'erreur') {
       charger({ simulerErreur: true });
     } else if (etat === 'vide') {
@@ -102,11 +125,19 @@ export default function EcranCatalogue() {
           </Pressable>
         }
       />
+      <ChampRecherche valeur={recherche} onChange={setRecherche} />
+      <View style={styles.filtres}>
+        <FiltresCategories active={categorie} onChange={setCategorie} bord={bord} />
+      </View>
       <View style={styles.titreListe}>
         <Text style={styles.titreListeTexte} accessibilityRole="header">
-          Nos produits
+          {filtreActif ? 'Résultats' : 'Nos produits'}
         </Text>
-        {statut === 'pret' && <Text style={styles.compteur}>{libelleArticles(produits.length)}</Text>}
+        {statut === 'pret' && (
+          <Text style={styles.compteur} accessibilityLiveRegion="polite">
+            {libelleArticles(produitsAffiches.length)}
+          </Text>
+        )}
       </View>
     </View>
   );
@@ -132,6 +163,17 @@ export default function EcranCatalogue() {
         />
       );
     }
+    // Des produits existent, mais aucun ne correspond à la recherche ou au filtre.
+    if (produits.length > 0) {
+      return (
+        <MessageEtat
+          icone="recherche"
+          titre="Aucun produit trouvé"
+          texte="Essayez un autre mot ou affichez à nouveau tout le catalogue."
+          action={{ libelle: 'Effacer la recherche', onPress: reinitialiserFiltres }}
+        />
+      );
+    }
     return (
       <MessageEtat
         icone="colis"
@@ -145,7 +187,7 @@ export default function EcranCatalogue() {
   return (
     <SafeAreaView style={styles.ecran} edges={['top', 'left', 'right']}>
       <FlatList
-        data={statut === 'pret' ? produits : []}
+        data={statut === 'pret' ? produitsAffiches : []}
         keyExtractor={(produit) => String(produit.id)}
         renderItem={({ item, index }) => (
           <CarteProduit produit={item} onPress={ouvrirProduit} forcerRemplacementPhoto={photoForcee && index === 0} />
@@ -197,11 +239,14 @@ const styles = StyleSheet.create({
   appuye: {
     opacity: 0.75,
   },
+  filtres: {
+    marginTop: 16,
+    marginBottom: 22,
+  },
   titreListe: {
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'space-between',
-    marginTop: 22,
     marginBottom: 13,
   },
   titreListeTexte: {
