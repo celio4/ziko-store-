@@ -21,6 +21,7 @@ const ICONES = {
   valider: 'check',
   colis: 'package',
   recharger: 'refresh-cw',
+  agrandir: 'maximize-2',
 } as const;
 
 export type NomIcone = keyof typeof ICONES;

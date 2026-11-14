@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Bouton } from '@/components/Bouton';
@@ -29,6 +29,7 @@ export default function EcranFicheProduit() {
 
   const [quantite, setQuantite] = useState(1);
   const [toastVisible, setToastVisible] = useState(false);
+  const [photoPleinEcran, setPhotoPleinEcran] = useState(false);
   const minuterieToast = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // On nettoie la minuterie si l'on quitte l'écran avant la fin du bandeau.
@@ -66,15 +67,26 @@ export default function EcranFicheProduit() {
     router.push({ pathname: '/commande', params: { id: String(produit.id), quantite: String(quantite) } });
   };
 
-  // Hauteur de la photo : min(52 % de l'écran, 430), au moins 360 (règle de la maquette),
-  // plus la hauteur de la barre d'état puisque la photo passe dessous.
-  const hauteurPhoto = Math.max(360, Math.min(height * 0.52, 430)) + marges.top;
+  // Grande photo : 60 % de l'écran (entre 380 et 560 pt), plus la hauteur de la
+  // barre d'état puisque la photo passe dessous.
+  const hauteurPhoto = Math.max(380, Math.min(height * 0.6, 560)) + marges.top;
 
   return (
     <View style={styles.ecran}>
       <ScrollView contentContainerStyle={{ paddingBottom: marges.bottom + 24 }} showsVerticalScrollIndicator={false}>
         <View style={[styles.photo, { height: hauteurPhoto }]}>
-          <ImageProduit uri={produit.photo} nom={produit.nom} style={StyleSheet.absoluteFill} />
+          {/* Toucher la photo l'ouvre en plein écran. */}
+          <Pressable
+            onPress={() => setPhotoPleinEcran(true)}
+            accessibilityRole="imagebutton"
+            accessibilityLabel={`Agrandir la photo : ${produit.nom}`}
+            style={StyleSheet.absoluteFill}
+          >
+            <ImageProduit uri={produit.photo} nom={produit.nom} style={StyleSheet.absoluteFill} />
+          </Pressable>
+          <View style={styles.indiceAgrandir} pointerEvents="none">
+            <Icone nom="agrandir" taille={15} couleur={couleurs.encre} />
+          </View>
 
           {/* Boutons flottants au-dessus de la photo, sous l'encoche. */}
           <Pressable
@@ -134,6 +146,33 @@ export default function EcranFicheProduit() {
       </ScrollView>
 
       {toastVisible && <Toast message={`${produit.nom} ajouté au panier`} bas={marges.bottom + 24} />}
+
+      {/* Photo en plein écran, en entier sur fond sombre. */}
+      <Modal
+        visible={photoPleinEcran}
+        animationType="fade"
+        presentationStyle="overFullScreen"
+        transparent
+        statusBarTranslucent
+        onRequestClose={() => setPhotoPleinEcran(false)}
+      >
+        <Pressable
+          style={styles.pleinEcran}
+          onPress={() => setPhotoPleinEcran(false)}
+          accessibilityRole="button"
+          accessibilityLabel="Fermer la photo"
+        >
+          <ImageProduit
+            uri={produit.photo}
+            nom={produit.nom}
+            ajustement="contain"
+            style={[StyleSheet.absoluteFill, styles.pleinEcranPhoto]}
+          />
+          <View style={[styles.pleinEcranFermer, { top: marges.top + 13 }]} pointerEvents="none">
+            <Icone nom="fermer" taille={22} couleur={couleurs.blanc} />
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -176,6 +215,35 @@ const styles = StyleSheet.create({
   },
   appuye: {
     opacity: 0.8,
+  },
+  indiceAgrandir: {
+    position: 'absolute',
+    right: 16,
+    bottom: 16 + 14, // au-dessus de la partie recouverte par le contenu arrondi
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: rayons.pilule,
+    backgroundColor: couleurs.voileBlanc,
+    boxShadow: ombres.standard,
+  },
+  pleinEcran: {
+    flex: 1,
+    backgroundColor: 'rgba(10, 14, 12, 0.96)',
+  },
+  pleinEcranPhoto: {
+    backgroundColor: 'transparent',
+  },
+  pleinEcranFermer: {
+    position: 'absolute',
+    right: 16,
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: rayons.pilule,
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
   },
   pagination: {
     position: 'absolute',

@@ -12,6 +12,8 @@ type Props = {
   style: StyleProp<ViewStyle>;
   /** Force l'affichage du visuel de remplacement (démonstration des états). */
   forcerRemplacement?: boolean;
+  /** « cover » (par défaut) remplit le cadre ; « contain » montre la photo entière. */
+  ajustement?: 'cover' | 'contain';
 };
 
 /**
@@ -24,7 +26,7 @@ type Props = {
  * - Sans photo de secours, si la photo ne peut pas être chargée, on affiche un visuel de remplacement
  *   (icône colis + « Photo indisponible » + nom du produit), comme la maquette.
  */
-export function ImageProduit({ uri, nom, style, forcerRemplacement = false }: Props) {
+export function ImageProduit({ uri, nom, style, forcerRemplacement = false, ajustement = 'cover' }: Props) {
   const [enErreur, setEnErreur] = useState(false);
   const secours = photoSecours(uri);
 
@@ -32,7 +34,7 @@ export function ImageProduit({ uri, nom, style, forcerRemplacement = false }: Pr
   if (enErreur && secours !== undefined && !forcerRemplacement) {
     return (
       <View style={[styles.conteneur, style]}>
-        <Image source={secours} style={StyleSheet.absoluteFill} contentFit="cover" accessibilityLabel={nom} />
+        <Image source={secours} style={StyleSheet.absoluteFill} contentFit={ajustement} accessibilityLabel={nom} />
       </View>
     );
   }
@@ -56,9 +58,9 @@ export function ImageProduit({ uri, nom, style, forcerRemplacement = false }: Pr
         source={{ uri }}
         // Pendant l'attente de la photo distante, la photo de secours est déjà visible.
         placeholder={secours}
-        placeholderContentFit="cover"
+        placeholderContentFit={ajustement}
         style={StyleSheet.absoluteFill}
-        contentFit="cover"
+        contentFit={ajustement}
         cachePolicy="memory-disk"
         transition={150}
         accessibilityLabel={nom}

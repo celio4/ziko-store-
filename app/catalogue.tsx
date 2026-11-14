@@ -206,6 +206,7 @@ export default function EcranCatalogue() {
         ListEmptyComponent={contenuVide}
         ItemSeparatorComponent={Separateur}
         contentContainerStyle={{ paddingHorizontal: bord, paddingBottom: marges.bottom + 24 }}
+        showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         // Réglages de fluidité : peu de cartes rendues d'un coup.
