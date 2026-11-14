@@ -37,6 +37,9 @@ npm run typecheck     # tsc --noEmit
 - **Hors connexion** : le catalogue est enregistré dans AsyncStorage après chaque
   chargement réussi et sert de secours (bandeau d'information) ; les photos sont
   préchargées dans le cache disque d'`expo-image`.
+- **Photos de secours** : 6 photos Unsplash incluses dans l'application
+  (`assets/images/produits`, crédits dans `data/photosSecours.ts`), visibles pendant le
+  chargement des photos du sujet et à leur place si picsum.photos ne répond pas.
 - **Quantité jamais inférieure à 1**, total recalculé à chaque changement.
 - **Feuille « Tester les états »** (bouton sur le catalogue) pour montrer chaque état
   sans modifier le code : chargement, erreur, hors connexion, liste vide, recherche vide,

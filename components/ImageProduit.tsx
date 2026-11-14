@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { useState } from 'react';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
+import { photoSecours } from '@/data/photosSecours';
 import { couleurs, polices } from '@/theme/theme';
 import { Icone } from './Icone';
 
@@ -18,11 +19,23 @@ type Props = {
  *
  * - `cachePolicy="memory-disk"` : expo-image garde la photo en mémoire (défilement
  *   fluide) et sur le disque du téléphone : elle reste visible hors connexion.
- * - Si la photo ne peut pas être chargée, on affiche un visuel de remplacement
+ * - Photo de secours incluse dans l'application (voir data/photosSecours.ts) :
+ *   visible pendant l'attente, et à la place de la photo si son chargement échoue.
+ * - Sans photo de secours, si la photo ne peut pas être chargée, on affiche un visuel de remplacement
  *   (icône colis + « Photo indisponible » + nom du produit), comme la maquette.
  */
 export function ImageProduit({ uri, nom, style, forcerRemplacement = false }: Props) {
   const [enErreur, setEnErreur] = useState(false);
+  const secours = photoSecours(uri);
+
+  // Photo distante en échec mais photo de secours incluse dans l'application : on l'affiche.
+  if (enErreur && secours !== undefined && !forcerRemplacement) {
+    return (
+      <View style={[styles.conteneur, style]}>
+        <Image source={secours} style={StyleSheet.absoluteFill} contentFit="cover" accessibilityLabel={nom} />
+      </View>
+    );
+  }
 
   if (enErreur || forcerRemplacement) {
     return (
@@ -41,6 +54,9 @@ export function ImageProduit({ uri, nom, style, forcerRemplacement = false }: Pr
     <View style={[styles.conteneur, style]}>
       <Image
         source={{ uri }}
+        // Pendant l'attente de la photo distante, la photo de secours est déjà visible.
+        placeholder={secours}
+        placeholderContentFit="cover"
         style={StyleSheet.absoluteFill}
         contentFit="cover"
         cachePolicy="memory-disk"
